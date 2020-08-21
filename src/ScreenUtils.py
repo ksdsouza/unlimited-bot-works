@@ -6,8 +6,7 @@ from gi.repository import Gdk, GdkPixbuf
 
 class ScreenUtil:
     def __init__(self):
-        w = Gdk.get_default_root_window().get_screen().get_active_window()
-        self.window = w
+        self.window = Gdk.get_default_root_window().get_screen().get_active_window()
 
     def get_pixels(self):
         pixel_buffer = Gdk.pixbuf_get_from_window(
@@ -22,17 +21,21 @@ class ScreenUtil:
 
 
 def array_from_pixbuf(p: GdkPixbuf) -> np.ndarray:
-    w, h, c, r = (p.get_width(), p.get_height(), p.get_n_channels(), p.get_rowstride())
+    width = p.get_width()
+    height = p.get_height()
+    channels = p.get_channels()
+    rows = p.get_rowstride()
+
     assert p.get_colorspace() == GdkPixbuf.Colorspace.RGB
     assert p.get_bits_per_sample() == 8
-    assert c == (4 if p.get_has_alpha() else 3)
-    assert r >= w * c
+    assert channels == (4 if p.get_has_alpha() else 3)
+    assert rows >= width * channels
 
     a = np.frombuffer(p.get_pixels(), dtype=np.uint8)
-    if a.shape[0] == w * c * h:
-        return a.reshape((h, w, c))
+    if a.shape[0] == width * channels * height:
+        return a.reshape((height, width, channels))
 
-    b = np.zeros((h, w * c), 'uint8')
-    for j in range(h):
-        b[j, :] = a[r * j:r * j + w * c]
-    return b.reshape((h, w, c))
+    b = np.zeros((height, width * channels), 'uint8')
+    for j in range(height):
+        b[j, :] = a[rows * j:rows * j + width * channels]
+    return b.reshape((height, width, channels))

@@ -39,10 +39,10 @@ while True:
         # selector.get_effective()
         cards = selector.get_cards()
         print(cards)
-        strategy = get_strategy(cards)
-        print(strategy)
-        for c in strategy:
-            selector.press_card(screenUtil.window, c)
+        strategy_cards = get_strategy(cards)
+        print(strategy_cards)
+        for card in strategy_cards:
+            selector.press_card(screenUtil.window, card)
             time.sleep(0.15)
         time.sleep(10)
     else:

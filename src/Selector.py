@@ -65,8 +65,7 @@ class Selector:
 
     def press_attack(self, window):
         attack_y, attack_x = ATTACK_TARGET_LOCATION
-        x, y = window.get_root_coords(1948, 818)
-        self.__press_at_location(*window.get_root_coords(x, y))
+        self.__press_at_location(*window.get_root_coords(attack_x+100, attack_y))
 
     def press_card(self, window, card_num):
         card_y, card_x = CARD_LOCATIONS[card_num]
@@ -74,10 +73,8 @@ class Selector:
         self.__press_at_location(x, y)
 
     def get_effective(self):
-        i = 0
-        for ys, xs in CARD_EFFECTIVE_LOCATIONS:
-            i += 1
-            region = self.pixels[ys, xs]
+        for y, x in CARD_EFFECTIVE_LOCATIONS:
+            region = self.pixels[y, x]
             print(self.is_effective(region))
 
     def is_effective(self, region: np.ndarray):
