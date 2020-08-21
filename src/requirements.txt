@@ -1,0 +1,11 @@
+pillow
+numpy
+gdk
+matplotlib
+opencv-contrib-python
+PyGObject
+pynput
+pytesseract
+scikit-image
+scipy
+tesseract
