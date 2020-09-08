@@ -1,13 +1,18 @@
+import os
 from concurrent import futures
 from typing import Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
-from pynput.mouse import Button, Controller
 
-from src.kmeans import get_dominant_colour
+from config import config
+from kmeans import get_dominant_colour
 
-ATTACK_TARGET_COLOUR = [1, 218, 234]
-ATTACK_TARGET_LOCATION = (818, 1848)
+ATTACK_TARGET_COLOUR = [0, 50, 110]
+ATTACK_TARGET_LOCATION = (900, 1700)
+
+SCREEN_OFFSET_X = 250
+SCREEN_OFFSET_Y = 0
 
 EFFECTIVE_COLOURS = np.array([
     [89, 0, 0],
@@ -24,13 +29,19 @@ EFFECTIVE_COLOURS = np.array([
 
 CARD_WIDTH = 280
 CARD_MARGIN = 105
-CARD_INIT_POSN = 205
-CARD_Y_REGIONS = slice(600, 945)
+CARD_INIT_POSN = 75
+CARD_Y_REGIONS = slice(800, 945)
 
 CARD_EFFECTIVE_WIDTH = 120
 CARD_EFFECTIVE_MARGIN = 265
-CARD_EFFECTIVE_INIT_POSN = 400
+CARD_EFFECTIVE_INIT_POSN = 250
 CARD_EFFECTIVE_Y_REGIONS = slice(540, 610)
+
+NP_LOCATIONS = [
+    (311, 615),
+    (311, 975),
+    (311, 1320),
+]
 
 CARD_LOCATIONS = []
 for i in range(5):
@@ -51,26 +62,28 @@ class Selector:
         self.pixels = pixels
 
     def attack_is_visible(self):
-        print(self.pixels[ATTACK_TARGET_LOCATION])
+        # plt.imsave('out.png', self.pixels[880:920, 1680:1720])
         [r, g, b] = self.pixels[ATTACK_TARGET_LOCATION]
+        print(r, g, b)
         [expected_r, expected_g, expected_b] = ATTACK_TARGET_COLOUR
         return loose_equals(r, expected_r, 3) and loose_equals(g, expected_g, 3) and loose_equals(b, expected_b, 3)
 
     @staticmethod
     def __press_at_location(x: int, y: int):
-        mouse = Controller()
-        mouse.position = x, y
-        mouse.move(1, 1)
-        mouse.click(Button.left)
+        device_id_flag = f'-s {config.device}' if config.device is not None else ''
+        cmd_prefix = f'adb {device_id_flag}'
+        os.system(f'{cmd_prefix} shell input tap {x + 250} {y}')
 
-    def press_attack(self, window):
+    def press_noble_phantasms(self):
+        [self.__press_at_location(x, y) for (y, x) in NP_LOCATIONS]
+
+    def press_attack(self):
         attack_y, attack_x = ATTACK_TARGET_LOCATION
-        self.__press_at_location(*window.get_root_coords(attack_x+100, attack_y))
+        self.__press_at_location(attack_x, attack_y)
 
-    def press_card(self, window, card_num):
-        card_y, card_x = CARD_LOCATIONS[card_num]
-        x, y = window.get_root_coords(card_x.start + 150, card_y.start + 100)
-        self.__press_at_location(x, y)
+    def press_card(self, card_num):
+        y, x = CARD_LOCATIONS[card_num]
+        self.__press_at_location(x.start, y.start)
 
     def get_effective(self):
         for y, x in CARD_EFFECTIVE_LOCATIONS:
@@ -92,6 +105,14 @@ class Selector:
             if not has_colour:
                 return False
         return True
+
+    def get_cards_seq(self):
+        cards = []
+        for i, card in enumerate([self.pixels[loc] for loc in CARD_LOCATIONS]):
+            plt.imsave(f'card{i}.png', np.ascontiguousarray(card))
+            cards.append(dominant_colour((i, card)))
+        print(cards)
+        return cards
 
     def get_cards(self):
         cards = ['', '', '', '', '']

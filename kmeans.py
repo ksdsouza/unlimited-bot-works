@@ -78,7 +78,7 @@ def get_dominant_colour(pixels: np.ndarray):
             abs(r - b),
             abs(b - g),
         ))
-    print(contrasts)
+    # print(contrasts)
     [r, g, b] = rgbs[np.argmax(contrasts)]
     if r == max(r, g, b):
         return 'R'

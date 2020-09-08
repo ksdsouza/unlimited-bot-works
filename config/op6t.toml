@@ -1,0 +1,8 @@
+[screenMargins]
+xLeft = 250
+xRight = 2170
+yTop = 0
+yBottom = 1080
+
+[adb]
+filename='device1.png'

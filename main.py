@@ -2,9 +2,11 @@ import time
 from collections import Counter
 
 import numpy as np
+import argparse
 
-from src.ScreenUtils import ScreenUtil
-from src.Selector import Selector
+from config import config
+from ScreenUtils import get_screen
+from Selector import Selector
 
 
 def get_strategy(cards):
@@ -23,28 +25,65 @@ def get_strategy(cards):
                 break
             if card == card_type:
                 strategy.append(i)
+    strategy_str = ''.join(cards[i] for i in strategy)
+
+    if strategy_str == 'AAB' or strategy_str == 'BBQ':
+        strategy[1], strategy[2] = strategy[2], strategy[1]
+    elif strategy_str == 'ABB' or strategy_str == 'BQQ':
+        strategy[0], strategy[1] = strategy[1], strategy[0]
+
     return strategy
 
 
-time.sleep(2)
-screenUtil = ScreenUtil()
+def run():
+    turn_counter = 0
+    while True:
+        pixels = get_screen()
+        selector = Selector(pixels)
+        if not selector.attack_is_visible():
+            print("Attack not visible")
+            continue
 
-while True:
-    pixels = screenUtil.get_pixels()
-    selector = Selector(pixels)
-    if selector.attack_is_visible():
-        selector.press_attack(screenUtil.window)
+        selector.press_attack()
         time.sleep(1)
-        selector.update_pixels(screenUtil.get_pixels())
+        turn_counter += 1
+        if turn_counter > 9:
+            selector.press_noble_phantasms()
+        selector.update_pixels(get_screen())
         # selector.get_effective()
+
         cards = selector.get_cards()
         print(cards)
         strategy_cards = get_strategy(cards)
-        print(strategy_cards)
         for card in strategy_cards:
-            selector.press_card(screenUtil.window, card)
-            time.sleep(0.15)
-        time.sleep(10)
-    else:
-        print("Attack not visible")
-        time.sleep(2)
+            selector.press_card(card)
+        time.sleep(15)
+
+
+arg_parser = argparse.ArgumentParser(description="A Fate Grand Order Bot")
+arg_parser.add_argument(
+    '--device',
+    metavar='adb_device_id',
+    type=str,
+    # nargs=1,
+    help='The ADB Device id'
+)
+arg_parser.add_argument(
+    '--c',
+    dest='config',
+    metavar='device_configuration',
+    type=str,
+    nargs=1,
+    help='Device configuration file',
+    default='config/config.toml'
+)
+
+
+def main():
+    args = arg_parser.parse_args()
+    config.load_configuration(args.config, device=args.device)
+    run()
+
+
+if __name__ == "__main__":
+    main()
